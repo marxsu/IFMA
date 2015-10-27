@@ -1,7 +1,67 @@
 #ifndef YIQISUANFA_H
 #define YIQISUANFA_H
+
+#include <QList>
+class Peak
+{
+public :
+    Peak()
+    {
+        start = 0;
+        end = 0;
+        jiange = 0;
+        max = 0;
+    }
+
+    ~Peak()
+    {
+
+    }
+public:
+    int start;
+    int end;
+    int jiange;
+    int max;
+};
+void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
+{
+        if(l < r)
+        {
+            int i = l,j = r;
+            Peak* tmpPeak = tmpPeakList->at(l);
+            while(i < j)
+            {
+                while(i < j &&tmpPeakList->at(j)->jiange <= tmpPeak->jiange)
+                {
+                    j--;
+                }
+                if(i < j)
+                {
+                    tmpPeakList->replace(i++,tmpPeakList->at(j));
+                }
+                while(i < j && tmpPeakList->at(i)->jiange > tmpPeak->jiange)
+                {
+                    i++;
+                }
+                if(i < j)
+                {
+                    tmpPeakList->replace(j--,tmpPeakList->at(i));
+                }
+            }
+            tmpPeakList->replace(i,tmpPeak);
+            sortPeakListByJiange(tmpPeakList,l,i-1);
+            sortPeakListByJiange(tmpPeakList,i+1,r);
+        }
+}
+
 void checkTest(double data[],int i,double result[])
 {
+
+    QList<Peak*> *peakList = new QList<Peak*>();
+
+    Peak* peak = new Peak();
+
+    peakList->push_back(peak);
     double *pinghuadata = new double[i];
     double *daoshudata = new double[i];
     for(int j=0;j<10/2;j++)
@@ -49,49 +109,83 @@ void checkTest(double data[],int i,double result[])
     bool flag2 = false;
     int feng_max[2] = {0};
     int feng[4]={0};
-    int c = 0;
-    char output[10];
     data[0] = -1;//避免数据线一开始处于较高的位置,影响峰值的判断.
 
     for(int j=0;j<i-testwindowsize+1;j++)
     {
-       if(c==4) break;
+       //if(c==4) break;
        double sum = 0.0;
        for(int k=j;k<testwindowsize+j;k++)
        {
             sum += daoshudata[k];
        }
        avg=sum/testwindowsize;
-       if(avg>=0.4 && j>=200 && j<=1100 && !flag1)
+       if(avg>=0.4 && !flag1)
        {
-          flag1 = true;
-          feng[c] = j;
-          c++;
+          flag1 = true;   //找到波峰起始点
+          //feng[c] = j;
+          //c++;
+          peak->start = j;
        }
        else if(flag1 & !flag2)
        {
+
          if(avg<-0.5)
          {
              flag2 = true;
          }
-         if(data[j]>data[feng_max[c/2]])
+         if(data[j]>data[peak->max])
          {
-             feng_max[c/2]=j;
-
+             peak->max = j;
          }
           if(j==500 || j==900)
          {
              flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点
          }
        }
-       else if(flag1 && flag2 && (avg>=-0.5|| j==1100) )
+       else if(flag1 && flag2)
        {
-          flag1 = false;
-          flag2 = false;
-          feng[c]=j;
-          c++;
+           if ((avg>=-0.5|| j==1100))  //找到波峰终止点
+             {
+                 flag1 = false;
+                 flag2 = false;
+                 peak->end = j;
+                 peak->jiange = peak->end - peak->start;
+                 peak = new Peak();
+                 peakList->push_back(peak);
+             }
        }
     }
+
+
+    //按波峰宽度进行降序排序
+    //快速排序
+    sortPeakListByJiange(peakList,0,peakList->count() - 1);
+
+    //波峰判断
+    if(peakList->at(0)->jiange > 100)
+        {
+          if(peakList->at(0)->max < peakList->at(1)->max)
+          {
+              feng[0] = peakList->at(0)->start;
+              feng[1] = peakList->at(0)->end;
+              feng_max[0] = peakList->at(0)->max;
+
+              feng[2] = peakList->at(1)->start;
+              feng[3] = peakList->at(1)->end;
+              feng_max[1] = peakList->at(1)->max;
+          }else
+          {
+              feng[0] = peakList->at(1)->start;
+              feng[1] = peakList->at(1)->end;
+              feng_max[0] = peakList->at(1)->max;
+
+              feng[2] = peakList->at(0)->start;
+              feng[3] = peakList->at(0)->end;
+              feng_max[1] = peakList->at(0)->max;
+          }
+        }
+
     double bendi=0;
     double sum_bendi=0;
     for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
@@ -101,7 +195,7 @@ void checkTest(double data[],int i,double result[])
     }
     bendi=sum_bendi/(41.0);
 
-    for(int j=0;j<c/2;j++)
+    for(int j=0;j<2;j++)
     {
       if(j==0)
       {
@@ -142,5 +236,7 @@ void checkTest(double data[],int i,double result[])
     }
     delete []pinghuadata;
     delete []daoshudata;
+    qDeleteAll(*peakList);
+    peakList->clear();
 }
 #endif // YIQISUANFA_H

@@ -230,7 +230,7 @@ CheckShow::CheckShow(QWidget *parent) :
 
 
     //test by MarxSu
-    ui->pushButton->setVisible(false);
+    ui->pushButton->setVisible(true);
     connect(ui->pushButton,SIGNAL(clicked()),this,SLOT(onTestButtonOnClick()));
 
 }
@@ -585,6 +585,7 @@ void CheckShow::set_linear_in()
         showPixtureScreen=false;
         update(xwidth-40,yposition-YCount*Yaxisgap,Xaxisgap*XCount+40,rectheight);
 
+        m3352.urt_wf.clearSeral();
         m3352.setFreq(255);
         m3352.Motor_in();
 
@@ -1855,5 +1856,5 @@ void CheckShow::onTestOkButtonOnClick(int tmpLedHight,int tmpLedLow,int tmpLedSy
 {
     qDebug()<<tmpLedHight<<tmpLedLow<<tmpLedSymbol<<tmpPmwDirection<<tmpPmwDirection<<tmpPmwEnable<<tmpPmwHz<<tmpSpiSymbol<<tmpSwdr<<tmpBenDi;
     m3352.setLedLight(tmpLedHight,tmpLedLow);
-    m3352.setFreq(tmpPmwHz);
+//    m3352.setFreq(tmpPmwHz);
 }
