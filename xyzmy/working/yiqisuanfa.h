@@ -163,7 +163,7 @@ void checkTest(double data[],int i,double result[])
     sortPeakListByJiange(peakList,0,peakList->count() - 1);
 
     //波峰判断
-    if(peakList->at(0)->jiange > 100)
+    if(peakList->at(0)->jiange > 100 &&  peakList->at(1)->jiange > 100)
         {
           if(peakList->at(0)->max < peakList->at(1)->max)
           {
@@ -199,7 +199,7 @@ void checkTest(double data[],int i,double result[])
     {
       if(j==0)
       {
-        int mianji=0;
+        double mianji=0;
         if(feng[j+1]-feng[j]>=50)
         {
             for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
