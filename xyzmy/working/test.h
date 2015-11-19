@@ -24,10 +24,16 @@ public :
     int getLedHight();
     int getLedLow();
     int getbindi();
+    int getTestCount();
+
+    void setTestCount(int );
+    void setLedHight(int );
+    void setPwmFreq(int );
+
 
 signals:
 
-    void okTest(int ,int ,int ,int ,int ,int ,int ,int ,int);
+    void okTest(int ,int ,int ,int ,int ,int ,int ,int ,int,int);
 public slots:
 
     void onOkButtonOnClick();

@@ -8,7 +8,7 @@ M3352::M3352()
     dir_flag=0x10;
     spi_flag=0x10;
     led_flag=0x10;
-    led_light_hight = 0xf0;
+    led_light_hight = 0xd7;
     led_light_low = 0x0f;
     speed=255;
 }

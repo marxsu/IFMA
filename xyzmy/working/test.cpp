@@ -55,9 +55,26 @@ int test::getbindi()
 {
     return ui->mbindi->text().toInt();
 }
+int test::getTestCount()
+{
+    return ui->m_testCount->text().toInt();
+}
+void test::setTestCount(int tmpCount)
+{
+    ui->m_testCount->setText(QString("%1").arg(tmpCount));
+}
+
+void test::setLedHight(int tmpLedHight)
+{
+    ui->mLedHight->setText(QString::number(tmpLedHight,16));
+}
+void test::setPwmFreq(int tmpPwmFreq)
+{
+    ui->mPmwHz->setText(QString::number(tmpPwmFreq,16));
+}
 
 void test::onOkButtonOnClick()
 {
-    emit okTest(getLedHight(),getLedLow(),getLedSymbol(),getPmwDirection(),getPmwEnable(),getPmwHz(),getSpiSymbol(),getSwdr(),getbindi());
+    emit okTest(getLedHight(),getLedLow(),getLedSymbol(),getPmwDirection(),getPmwEnable(),getPmwHz(),getSpiSymbol(),getSwdr(),getbindi(),getTestCount());
     this->close();
 }

@@ -1,11 +1,7 @@
 #ifndef YIQISUANFA_H
 #define YIQISUANFA_H
 
-#include <QDebug>
 #include <QList>
-#include "FLOUR_v1.0/qtest.h"
-extern int feng1;
-extern int feng2;
 class Peak
 {
 public :
@@ -35,7 +31,7 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
             Peak* tmpPeak = tmpPeakList->at(l);
             while(i < j)
             {
-                while(i < j &&tmpPeakList->at(j)->max <= tmpPeak->max)
+                while(i < j &&tmpPeakList->at(j)->jiange <= tmpPeak->jiange)
                 {
                     j--;
                 }
@@ -43,7 +39,7 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
                 {
                     tmpPeakList->replace(i++,tmpPeakList->at(j));
                 }
-                while(i < j && tmpPeakList->at(i)->max > tmpPeak->max)
+                while(i < j && tmpPeakList->at(i)->jiange > tmpPeak->jiange)
                 {
                     i++;
                 }
@@ -58,7 +54,7 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
         }
 }
 
-void checkTest(double data[],int i,double result[], double originData[])
+void checkTest(double data[],int i,double result[])
 {
 
     QList<Peak*> *peakList = new QList<Peak*>();
@@ -142,10 +138,6 @@ void checkTest(double data[],int i,double result[], double originData[])
          {
              peak->max = j;
          }
-//         if(originData[j] > originData[peak->max])    //正确找到最高点位置
-//          {
-//                peak->max = j;
-//          }
           if(j==500 || j==900)
          {
              flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点
@@ -153,14 +145,6 @@ void checkTest(double data[],int i,double result[], double originData[])
        }
        else if(flag1 && flag2)
        {
-           if(data[j]>data[peak->max])
-           {
-               peak->max = j;
-           }
-//           if(originData[j] > originData[peak->max])  //正确找到最高点位置
-//             {
-//                  peak->max = j;
-//             }
            if ((avg>=-0.5|| j==1100))  //找到波峰终止点
              {
                  flag1 = false;
@@ -179,7 +163,7 @@ void checkTest(double data[],int i,double result[], double originData[])
     sortPeakListByJiange(peakList,0,peakList->count() - 1);
 
     //波峰判断
-//    if(peakList->at(0)->jiange > 50 && peakList->at(1)->jiange > 50)
+    if(peakList->at(0)->jiange > 100 &&  peakList->at(1)->jiange > 100)
         {
           if(peakList->at(0)->max < peakList->at(1)->max)
           {
@@ -202,69 +186,52 @@ void checkTest(double data[],int i,double result[], double originData[])
           }
         }
 
-//    double bendi=0;
-//    double sum_bendi=0;
-    qDebug()<<"feng_max[0]"<<feng_max[0];
-    qDebug()<<"feng_max[1]"<<feng_max[1];
-    qDebug()<<"data[feng_max[0]]"<<data[feng_max[0]];
-    qDebug()<<"data[feng_max[1]]"<<data[feng_max[1]];
-//    for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
-//    {
-//         sum_bendi+=data[j];
-//    }
-//    bendi=sum_bendi/(41.0);
+    double bendi=0;
+    double sum_bendi=0;
+    for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
+    {
+         sum_bendi+=data[j];
+
+    }
+    bendi=sum_bendi/(41.0);
 
     for(int j=0;j<2;j++)
     {
       if(j==0)
       {
-//        double mianji=0;
-//        if(feng[j+1]-feng[j]>=50)
-//        {
-//            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-//            {
+        int mianji=0;
+        if(feng[j+1]-feng[j]>=50)
+        {
+            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
+            {
 
-//               mianji+=(data[x]-bendi);
-//            }
-//            result[0]=mianji;
-//        }
-//        else
-//        {
-//            result[0]=0;
-//        }
-
-          if((data[feng_max[0]]-data[feng[1]])>200)  //峰高度最少要有200，否则这个峰就认为为0
-          {
-              result[0] = data[feng_max[0]];  //直接取峰值，不算面积
-          }
-          else
-          {
-              result[0] = 0;
-          }
+            // mianji+=(data[x]);
+               mianji+=(data[x]-bendi);
+            }
+            result[0]=mianji;
+        }
+        else
+        {
+            result[0]=0;
+        }
       }
       else if(j==1)
       {
-//        double mianji=0;
-//        if(feng[j+2]-feng[j+1]>=50)
-//        {
-//            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-//            {
-//               mianji+=(data[x]-bendi);
-//            }
-//            result[1]=mianji;
-//        }
-//        else
-//        {
-//            result[1]=0;
-//        }
-          if((data[feng_max[1]]-data[feng[3]])>200)  //峰高度最少要有200，否则这个峰就认为为0
-          {
-              result[1] = data[feng_max[1]];  //直接取峰值，不算面积
-          }
-          else
-          {
-              result[1] = 0;
-          }
+        double mianji=0;
+        if(feng[j+2]-feng[j+1]>=50)
+        {
+            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
+            {
+
+            // mianji+=(data[x]);
+               mianji+=(data[x]-bendi);
+            }
+            result[1]=mianji;
+        }
+        else
+        {
+            result[1]=0;
+        }
       }
     }
     delete []pinghuadata;
@@ -272,41 +239,4 @@ void checkTest(double data[],int i,double result[], double originData[])
     qDeleteAll(*peakList);
     peakList->clear();
 }
-
-void qCheckTest(double data[],int i,double result[])
-{
-    int feng_max[2] = {0};
-    double bendi=0;
-    double sum_bendi=0;
-    qTest(data);
-    feng_max[0] = feng1;
-    feng_max[1] = feng2;
-    for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
-    {
-         sum_bendi+=data[j];
-    }
-    for(int j=0;j<2;j++)
-    {
-      if(j==0)
-      {
-        double mianji=0;
-        for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-         {
-               mianji+=(data[x]-bendi);
-         }
-            result[0]=mianji;
-        }
-      else if(j==1)
-      {
-        double mianji=0;
-        for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-        {
-             mianji+=(data[x]-bendi);
-         }
-            result[1]=mianji;
-       }
-    }
-
-}
-
 #endif // YIQISUANFA_H

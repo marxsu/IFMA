@@ -45,7 +45,15 @@ SOURCES += main.cpp \
     sqlite.cpp \
     commserial.cpp \
     connector.cpp \
-    test.cpp
+    test.cpp \
+    FLOUR_v1.0/findpeakcore.cpp \
+    FLOUR_v1.0/findpeakcore_initialize.cpp \
+    FLOUR_v1.0/findpeakcore_terminate.cpp \
+    FLOUR_v1.0/fpeak.cpp \
+    FLOUR_v1.0/rtGetInf.cpp \
+    FLOUR_v1.0/rtGetNaN.cpp \
+    FLOUR_v1.0/rt_nonfinite.cpp \
+    FLOUR_v1.0/qtest.cpp
 
 HEADERS += dialog.h \
     testshow.h \
@@ -90,7 +98,17 @@ HEADERS += dialog.h \
     yiqisuanfa.h \
     commserial.h \
     connector.h \
-    test.h
+    test.h \
+    FLOUR_v1.0/findpeakcore.h \
+    FLOUR_v1.0/findpeakcore_initialize.h \
+    FLOUR_v1.0/findpeakcore_terminate.h \
+    FLOUR_v1.0/findpeakcore_types.h \
+    FLOUR_v1.0/fpeak.h \
+    FLOUR_v1.0/rtGetInf.h \
+    FLOUR_v1.0/rtGetNaN.h \
+    FLOUR_v1.0/rt_nonfinite.h \
+    FLOUR_v1.0/rtwtypes.h \
+    FLOUR_v1.0/qtest.h
 FORMS += dialog.ui \
     testshow.ui \
     checkshow.ui \

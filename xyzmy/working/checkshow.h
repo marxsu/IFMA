@@ -204,6 +204,13 @@ private:
     float RealValue[6];
     bool Second_Curves;
     //******************************
+
+
+    // add by marxsu
+
+    int mTestCount;
+    int mTestFreq;
+    void SaveAllArea(QString name);
 signals:
     void begintodraw();
     void CheckShowFinished();
@@ -256,7 +263,17 @@ public slots:
 
     //test by MarxSu
     void onTestButtonOnClick();
-    void onTestOkButtonOnClick(int,int,int,int,int,int,int,int,int);
+    void onTestOkButtonOnClick(int,int,int,int,int,int,int,int,int,int);
+    void onChangeAppButtonClick();
+
+    void onSaveButtonOnClick();
+    void removefilesindir(const QString& path);
+    void onDeleteButtonOnClick();
+    bool copyDirectoryFiles(const QString &fromDir, const QString &toDir, bool coverFileIfExist);
+
+    void onTestCountSet();
+
+    qint64 dirSize(QString );
 };
 
 #endif // CHECKSHOW_H

@@ -102,7 +102,7 @@ double Second_Area;
 double AreaDivided;
 double correctAreaDivided;
 int dropPoints=0;//drop 50 points
-int Search_peaks(double *SmoothSaveData);
+int Search_peaks(double *SmoothSaveData, double *Savedata);
 const int RepeatTimes=5;
 const int lowerlimitArea=50000;
 const int NegativeAreaThreshold=100;
@@ -232,7 +232,12 @@ CheckShow::CheckShow(QWidget *parent) :
     //test by MarxSu
     ui->pushButton->setVisible(true);
     connect(ui->pushButton,SIGNAL(clicked()),this,SLOT(onTestButtonOnClick()));
-
+    ui->m_saveButton->setVisible(true);
+    connect(ui->m_saveButton,SIGNAL(clicked()),this,SLOT(onSaveButtonOnClick()));
+    connect(ui->m_deleteButton,SIGNAL(clicked()),this,SLOT(onDeleteButtonOnClick()));
+    mTestCount = 1;
+    mTestFreq = 235;
+     connect(ui->mChangeAppButton,SIGNAL(clicked()),this,SLOT(onChangeAppButtonClick()));
 }
 
 
@@ -545,6 +550,21 @@ void CheckShow::drawBlack(QPainter *paint)
     paint->fillRect(rect,QBrush(QColor(0,0,0)));
 }
 
+void CheckShow::SaveAllArea(QString name)
+{
+    QString fileName;
+
+    int i=0;
+
+    fileName="points/" + name + QString::number(saveFileName) +  ".txt";//create the file
+
+    QFile file(fileName);
+    if(file.open(QIODevice::WriteOnly)<0)
+        QMessageBox::about(NULL,"checkshow","open saveArea error!");
+    QTextStream in(&file);
+     in<<"firstArea    "<<First_Area<<endl;
+     in<<"secodeArea    "<<Second_Area<<endl;
+}
 
 void CheckShow::SaveAllPoints(double *data,QString name,int total)
 {//暂未修改
@@ -570,6 +590,14 @@ void CheckShow::createdirectory()
     mkdir("/opt/points",S_IRWXU);//create a new directory
     mkdir("/opt/formula",S_IRWXU);//create a new directory
     mkdir("/opt/database",S_IRWXU);//create a new directory
+}
+void CheckShow::onTestCountSet()
+{
+    for(int i = 0; i < mTestCount; i++)
+    {
+        set_linear_in();
+        QCoreApplication::processEvents();
+    }
 }
 
 void CheckShow::set_linear_in()
@@ -610,7 +638,7 @@ void CheckShow::set_linear_in()
         if(tiaodai==2)
             m3352.setFreq(225);
         else if(tiaodai==6)
-            m3352.setFreq(235);
+            m3352.setFreq(mTestFreq);
         m3352.urt_wf.clearSeral();
         m3352.Motor_out();
 
@@ -724,11 +752,11 @@ void CheckShow::finished_Test()
 
         ui->label_Area1->show();
         ui->label_Area2->show();
-        Search_peaks(Savedata);
+        Search_peaks(SmoothSaveData,Savedata);
 
         //SaveAllPoints(Savedata,"orgin",1200) ;
         //SaveAllPoints(Savedata,"smooth",1200);//保存平滑后的数据
-
+        SaveAllArea("area");
         ui->label_Area1->setText(QString::number(First_Area));
         ui->label_Area2->setText(QString::number(Second_Area));
 
@@ -1144,14 +1172,14 @@ void lyq_test(int data[],int i,double daoshudata[],int result[])
     }
 }
 
-int Search_peaks(double *SmoothSaveData)
+int Search_peaks(double *SmoothSaveData, double *Savedata)
 {
     double result[2]={0.0,0.0} ;
-    checkTest(SmoothSaveData,1200,result);
+    checkTest(SmoothSaveData,1200,result,Savedata);
+//    qCheckTest(Savedata,1200,result);
     First_Area = result[0] ;
     Second_Area = result[1] ;
     qDebug()<<"yiqisuanfa"<<"firstArea"<<First_Area<<"secondArea"<<Second_Area;
-
     if(Second_Area>=1.0)
         AreaDivided=First_Area/Second_Area;//增加一个判断second_area是否为零的判断
     //    int n=1200;
@@ -1250,7 +1278,7 @@ void CheckShow::BeginRepeatTest()
         sleep(3);
         set_linear_in();//获得数据
         smooth(10);//平滑
-        Search_peaks(SmoothSaveData);//找波峰
+        Search_peaks(SmoothSaveData,Savedata);//找波峰
         repeatTestValues[i]=AreaDivided;//get areadivided
     }
     gettheaverage();
@@ -1615,7 +1643,10 @@ void CheckShow::initshow()
     warning->move((800-warning->width())/2,(480-warning->height())/2);
     timerEvent_Id=startTimer(1000);
     timerEvent(0);
-    connect(ui->pushButton_Test,SIGNAL(clicked()),this,SLOT(set_linear_in()));
+    //test by marxsu
+//    connect(ui->pushButton_Test,SIGNAL(clicked()),this,SLOT(set_linear_in()));
+    connect(ui->pushButton_Test,SIGNAL(clicked()),this,SLOT(onTestCountSet()));
+
     //when you presised out,then a box full of message you need to input
     connect(ui->pushButton_Out, SIGNAL(clicked()), this, SLOT(Step_in_or_out()));
     connect(ui->pushButton_Exit,SIGNAL(clicked()),this,SLOT(home()));
@@ -1849,12 +1880,139 @@ void CheckShow::initshowStrips()
 void CheckShow::onTestButtonOnClick()
 {
     test *tmpTest = new test();
-    connect(tmpTest,SIGNAL(okTest(int,int,int,int,int,int,int,int,int)),this,SLOT(onTestOkButtonOnClick(int,int,int,int,int,int,int,int,int)));
+    tmpTest->setTestCount(mTestCount);
+    tmpTest->setLedHight(m3352.led_light_hight);
+    tmpTest->setPwmFreq(mTestFreq);
+    connect(tmpTest,SIGNAL(okTest(int,int,int,int,int,int,int,int,int,int)),this,SLOT(onTestOkButtonOnClick(int,int,int,int,int,int,int,int,int,int)));
     tmpTest->show();
 }
-void CheckShow::onTestOkButtonOnClick(int tmpLedHight,int tmpLedLow,int tmpLedSymbol,int tmpPmwDirection,int tmpPmwEnable,int tmpPmwHz,int tmpSpiSymbol,int tmpSwdr,int tmpBenDi)
+void CheckShow::onTestOkButtonOnClick(int tmpLedHight,int tmpLedLow,int tmpLedSymbol,int tmpPmwDirection,int tmpPmwEnable,int tmpPmwHz,int tmpSpiSymbol,int tmpSwdr,int tmpBenDi,int tmpTestCount)
 {
     qDebug()<<tmpLedHight<<tmpLedLow<<tmpLedSymbol<<tmpPmwDirection<<tmpPmwDirection<<tmpPmwEnable<<tmpPmwHz<<tmpSpiSymbol<<tmpSwdr<<tmpBenDi;
     m3352.setLedLight(tmpLedHight,tmpLedLow);
-//    m3352.setFreq(tmpPmwHz);
+    mTestCount = tmpTestCount;
+    mTestFreq = tmpPmwHz;
+    m3352.setFreq(tmpPmwHz);
+}
+void CheckShow::onChangeAppButtonClick()
+{
+    QFileInfo sdcard("/media/sda1");
+    if(!sdcard.exists())
+    {
+        warning->setText(QString::fromUtf8("请插入SD卡"));
+        warning->show();
+        return ;
+    }
+    QString removeFilePath = "/opt/xyz";
+    QFile::remove(removeFilePath);
+    QFile::copy("/media/sda1/xyz","/opt/xyz");
+     system("sync");
+     warning->setText(QString::fromUtf8("文件拷贝完毕"));
+     warning->show();
+}
+
+void CheckShow::onDeleteButtonOnClick()
+{
+    removefilesindir("/opt/points");
+    warning->setText(QString::fromUtf8("文件删除完毕"));
+    warning->show();
+}
+void CheckShow:: removefilesindir(const QString& path)
+{
+  QDir dir(path);
+  QFileInfoList info_list = dir.entryInfoList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
+  foreach(QFileInfo file_info, info_list)
+  {
+    if (file_info.isDir())
+    {
+      removefilesindir(file_info.absoluteFilePath());
+    }
+    else if (file_info.isFile())
+    {
+      QFile file(file_info.absoluteFilePath());
+      qDebug() << "remove file  : " << file_info.absoluteFilePath();
+      file.remove();
+    }
+  }
+
+}
+void CheckShow::onSaveButtonOnClick()
+{
+    QFileInfo sdcard("/media/sda1");
+    if(!sdcard.exists())
+    {
+        warning->setText(QString::fromUtf8("请插入SD卡"));
+        warning->show();
+        return ;
+    }
+    QString fromDir = "/opt/points";
+    QString toDir = "/media/sda1/points";
+    if(copyDirectoryFiles(fromDir,toDir,true))
+    {
+        system("sync");
+        int fromDirSize =  dirSize(fromDir);
+        int toDirSize = 0;
+        while(fromDirSize != toDirSize)
+        {
+            toDirSize = dirSize(toDir);
+        }
+        qDebug()<<"fromDirSize"<<fromDirSize;
+        qDebug()<<"toDirSize"<<toDirSize;
+        warning->setText(QString::fromUtf8("文件拷贝完毕"));
+        warning->show();
+    }else
+    {
+        warning->setText(QString::fromUtf8("错误"));
+        warning->show();
+    }
+}
+qint64 CheckShow::dirSize(QString tmpDir)
+{
+    QDir dir(tmpDir);
+    qint64 size = 0;
+    // dir.entryInfoList(QDir::Files)返回文件信息
+    foreach (QFileInfo fileInfo, dir.entryInfoList(QDir::Files))
+    //计算文件大小
+    size += fileInfo.size();
+    // dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)返回所有子目录，并进行过滤
+    foreach (QString subDir, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+    //若存在子目录，则递归调用du函数
+    size += dirSize(tmpDir + QDir::separator() + subDir);
+    return size;
+}
+
+bool CheckShow::copyDirectoryFiles(const QString &fromDir, const QString &toDir, bool coverFileIfExist)
+{
+    QDir sourceDir(fromDir);
+    QDir targetDir(toDir);
+
+    if(!targetDir.exists()){    /**< 如果目标目录不存在，则进行创建 */
+        if(!targetDir.mkdir(targetDir.absolutePath()))
+            return false;
+    }
+
+    QFileInfoList fileInfoList = sourceDir.entryInfoList();
+    foreach(QFileInfo fileInfo, fileInfoList){
+        if(fileInfo.fileName() == "." || fileInfo.fileName() == "..")
+            continue;
+
+        if(fileInfo.isDir()){    /**< 当为目录时，递归的进行copy */
+            if(!copyDirectoryFiles(fileInfo.filePath(),
+                targetDir.filePath(fileInfo.fileName()),
+                coverFileIfExist))
+                return false;
+        }
+        else{            /**< 当允许覆盖操作时，将旧文件进行删除操作 */
+            if(coverFileIfExist && targetDir.exists(fileInfo.fileName())){
+                targetDir.remove(fileInfo.fileName());
+            }
+
+            /// 进行文件copy
+            if(!QFile::copy(fileInfo.filePath(),
+                targetDir.filePath(fileInfo.fileName()))){
+                    return false;
+            }
+        }
+    }
+    return true;
 }
