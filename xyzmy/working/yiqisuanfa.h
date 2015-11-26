@@ -60,7 +60,6 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
 
 void checkTest(double data[],int i,double result[], double originData[])
 {
-
     QList<Peak*> *peakList = new QList<Peak*>();
 
     Peak* peak = new Peak();
@@ -105,7 +104,7 @@ void checkTest(double data[],int i,double result[], double originData[])
 
        }
     }
-
+    qDebug()<<"testwindowsize=10";
     int testwindowsize=10;
 
     double avg=0.0;
@@ -177,9 +176,8 @@ void checkTest(double data[],int i,double result[], double originData[])
     //按波峰宽度进行降序排序
     //快速排序
     sortPeakListByJiange(peakList,0,peakList->count() - 1);
-
     //波峰判断
-//    if(peakList->at(0)->jiange > 50 && peakList->at(1)->jiange > 50)
+    if(peakList->count() >= 2)
         {
           if(peakList->at(0)->max < peakList->at(1)->max)
           {

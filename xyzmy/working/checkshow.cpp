@@ -67,6 +67,7 @@ Update:modify this software to Six point calibrate
 //UPDATE：在SD卡中导入的公式进行设置，在其中加入“小数为数，显示单位”实现这些信息的动态添加
 
 */
+#include <fstream>
 #include "checkshow.h"
 #include "ui_checkshow.h"
 #include "yiqisuanfa.h"
@@ -552,6 +553,7 @@ void CheckShow::drawBlack(QPainter *paint)
 
 void CheckShow::SaveAllArea(QString name)
 {
+    qDebug()<<"CheckShow::SaveAllArea";
     QString fileName;
 
     int i=0;
@@ -585,6 +587,24 @@ void CheckShow::SaveAllPoints(double *data,QString name,int total)
         saveFileName++;
 }
 
+//发现用QTestStream类写文件需要的时间太久，所以改用C++的ofstream类写
+void CheckShow::SaveAllPointsByCPP(double *data, QString name, int total)
+{
+    qDebug()<<"CheckShow::SaveAllPointsByCPP";
+    std::ofstream fout;
+    QString fileName;
+    int i=0;
+    fileName="points/" + name + QString::number(saveFileName) +  ".txt";//create the file
+
+    fout.open(fileName.toStdString().c_str());
+
+    for(i=0; i<total; i++)
+        fout << (data[i]) << '\n';
+
+    if(name == "orgin")
+        saveFileName++;
+}
+
 void CheckShow::createdirectory()
 {
     mkdir("/opt/points",S_IRWXU);//create a new directory
@@ -602,6 +622,13 @@ void CheckShow::onTestCountSet()
 
 void CheckShow::set_linear_in()
 {  
+    disconnect(ui->pushButton_Out, SIGNAL(clicked()), this, SLOT(Step_in_or_out()));
+    disconnect(ui->pushButton_Test,SIGNAL(clicked()),this,SLOT(set_linear_in()));
+    disconnect(ui->pushButton_save,SIGNAL(clicked()),this,SLOT(ResultSave()));
+    disconnect(ui->pushButton_print,SIGNAL(clicked()),this,SLOT(printInfo()));
+    disconnect(ui->pushButton_Exit,SIGNAL(clicked()),this,SLOT(home()));
+    disconnect(ui->pushButton_LogOut,SIGNAL(clicked()),this,SLOT(LogOut()));
+
     if(ui->comboBox_Batch->currentText() == ""
             || ui->comboBox_Type->currentText() == "")
     {
@@ -617,11 +644,28 @@ void CheckShow::set_linear_in()
         m3352.setFreq(255);
         m3352.Motor_in();
 
+        QTime OcDieTime = QTime::currentTime().addMSecs(2000);  //ms
         while(1)
         {
             if(1==m3352.urt_wf.DataIn(0))//读到内侧光耦就退出
             {
                 qDebug() << "read OC successfully";
+                break;
+            }
+
+            //解决如果没读到串口数据引发死循环问题
+            if( QTime::currentTime() >= OcDieTime )
+            {
+                //rebootWarning = new warning_two(this);
+                //rebootWarning->move((800-Backupwarning->geometry().width())/2,(480-Backupwarning->geometry().height())/2);
+               // connect(rebootWarning,SIGNAL(Pressed_Yes()),this,SLOT(ReallyReboot()));
+                //disconnect(Backupwarning,SIGNAL(Pressed_Yes()));
+               // rebootWarning->setText(QString::fromUtf8("读内侧光耦出错，是否重启？"));
+               // rebootWarning->exec();
+                warning->move((800-warning->width())/2,(480-warning->height())/2);
+                warning->setRight();
+                warning->setText(QString::fromUtf8("读内侧光耦出错, 请检查"));
+                warning->exec();
                 break;
             }
         }
@@ -645,6 +689,8 @@ void CheckShow::set_linear_in()
 
 //        m3352.urt_wf.DataIn(0);
         m3352.SPI_open();
+
+        QTime DataDieTime = QTime::currentTime().addMSecs(10000);  //ms
         while(1)
         {
             int len2=m3352.urt_wf.DataIn(1);
@@ -653,6 +699,17 @@ void CheckShow::set_linear_in()
             len+=len2;
             if(len>=2400)
                 break;
+            //解决如果没读到串口数据引发死循环问题
+            qDebug()<<"QTime::currentTime()"<<QTime::currentTime()<<"DataDieTime"<<DataDieTime;
+            if(QTime::currentTime() >= DataDieTime)
+            {
+                qDebug()<<"hrehrehrhe";
+                warning->move((800-warning->width())/2,(480-warning->height())/2);
+                warning->setRight();
+                warning->setText(QString::fromUtf8("读串口数据出错, 请检查"));
+                warning->exec();
+                break;
+            }
         }
 
         m3352.SPI_close();
@@ -663,19 +720,20 @@ void CheckShow::set_linear_in()
         for(i=0;i<2400;i++)
             AD[i] = data3[i] ;
 
-                SaveAllPoints(AD,"AD",2400) ;
+//                SaveAllPoints(AD,"AD",2400) ;
+        SaveAllPointsByCPP(AD, "AD", 1200);
 
         for(i=0;i<1200;i++)
         {//转换
             Savedata[i]=(data3[i*2]*256+data3[i*2+1])/6.5535;
         }
 
-        SaveAllPoints(Savedata,"orgin",1200) ;
+//        SaveAllPoints(Savedata,"orgin",1200) ;
+        SaveAllPointsByCPP(Savedata,"orgin",1200) ;
         delete [] data3;
         m3352.LED_close();
         m3352.Motor_close();//电机停止
-
-        NextMoveDirection=PWM_IOCTL_SET_FREQ_OUT;
+        NextMoveDirection=PWM_IOCTL_SET_FREQ_IN;
 
         if(isSelfCheck==true)
         {
@@ -732,6 +790,7 @@ int CheckShow::CheckStatusBefore()
 
 void CheckShow::finished_Test()
 {
+    qDebug()<<"CheckShow::finished_Test";
     smooth(10);//smooth the data and save it in smoothSavedata[]
     update(xwidth-20,yposition-YCount*Yaxisgap,Xaxisgap*XCount+20,rectheight);
     isDraw=false;
@@ -791,10 +850,25 @@ void CheckShow::finished_Test()
         ui->label_value->setText(QString::fromLocal8Bit(type));
         break;
     }
+
+    //解决连续点击按钮会响应多次问题
+    QTime dieTime = QTime::currentTime().addMSecs(500);  //0.5s
+    while( QTime::currentTime() < dieTime )
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 1000);  //max 1s
+
+    connect(ui->pushButton_Out, SIGNAL(clicked()), this, SLOT(Step_in_or_out()));
+    connect(ui->pushButton_Test,SIGNAL(clicked()),this,SLOT(set_linear_in()));
+    connect(ui->pushButton_save,SIGNAL(clicked()),this,SLOT(ResultSave()));
+    connect(ui->pushButton_print,SIGNAL(clicked()),this,SLOT(printInfo()));
+    connect(ui->pushButton_Exit,SIGNAL(clicked()),this,SLOT(home()));
+    connect(ui->pushButton_LogOut,SIGNAL(clicked()),this,SLOT(LogOut()));
+
     ui->pushButton_Test->setEnabled(true);
     ui->pushButton_Out->setEnabled(true);
     ui->pushButton_save->setEnabled(true);
     ui->pushButton_print->setEnabled(true);
+    ui->pushButton_Exit->setEnabled(true);
+    ui->pushButton_LogOut->setEnabled(true);
 }
 
 int CheckShow::GetCurrentPosition()

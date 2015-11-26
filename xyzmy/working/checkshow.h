@@ -177,6 +177,7 @@ private:
     QString bach_ID_show;
     QString Project_Calcuate;
     void SaveAllPoints(double * data,QString name, int total);//save 300 points in disk
+    void SaveAllPointsByCPP(double *data, QString name, int total);
     void createdirectory();
     void initiateInputDialog();
     bool linearAtOut;
