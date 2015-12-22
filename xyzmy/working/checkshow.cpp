@@ -617,6 +617,7 @@ void CheckShow::onTestCountSet()
     {
         set_linear_in();
         QCoreApplication::processEvents();
+        ::sleep(10);
     }
 }
 
@@ -700,7 +701,6 @@ void CheckShow::set_linear_in()
             if(len>=2400)
                 break;
             //解决如果没读到串口数据引发死循环问题
-            qDebug()<<"QTime::currentTime()"<<QTime::currentTime()<<"DataDieTime"<<DataDieTime;
             if(QTime::currentTime() >= DataDieTime)
             {
                 qDebug()<<"hrehrehrhe";
@@ -733,7 +733,7 @@ void CheckShow::set_linear_in()
         delete [] data3;
         m3352.LED_close();
         m3352.Motor_close();//电机停止
-        NextMoveDirection=PWM_IOCTL_SET_FREQ_IN;
+        NextMoveDirection=PWM_IOCTL_SET_FREQ_OUT;
 
         if(isSelfCheck==true)
         {
@@ -815,7 +815,7 @@ void CheckShow::finished_Test()
 
         //SaveAllPoints(Savedata,"orgin",1200) ;
         //SaveAllPoints(Savedata,"smooth",1200);//保存平滑后的数据
-        SaveAllArea("area");
+//        SaveAllArea("area");
         ui->label_Area1->setText(QString::number(First_Area));
         ui->label_Area2->setText(QString::number(Second_Area));
 

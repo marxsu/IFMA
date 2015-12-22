@@ -34,6 +34,8 @@ TestShow::TestShow(QWidget *parent) :
     dateEdit->setGeometry(QRect(413,90,163,29));
     dateEdit->setAlignment(Qt::AlignCenter);
     dateEdit->setDate(QDateTime::currentDateTime().date());
+
+    ui->pushButton->setVisible(false);
 }
 
 void TestShow::initComboxname()

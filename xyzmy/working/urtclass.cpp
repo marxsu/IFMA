@@ -1,6 +1,6 @@
 #include "urtclass.h"
 #include "QMessageBox"
-
+#include "mywarning.h"
 UrtClass::UrtClass(QObject *parent) :
     QObject(parent)
 {
@@ -17,7 +17,7 @@ void UrtClass::Init_Dev()
     data=new char[10000];
     tempbuf1=new char[30];
     tempbuf2=new char[30];
-    fd=::open("/dev/ttyO1",O_RDWR | O_NOCTTY );
+    fd=::open("/dev/ttyO1",O_RDWR | O_NOCTTY);
 
     struct termios options;  // 串口配置结构体
     tcgetattr(fd,&options); //获取当前设置
@@ -115,8 +115,6 @@ void UrtClass::remoteDataIncoming()
         sendNoti(tempbuf1,1);
     }
 }
-
-
 /*
 *函数名：DataIn
 *作 用：从串口中取数据
@@ -130,6 +128,7 @@ int UrtClass::DataIn(int mode)
 //    QFile file("Result/data.txt");
 //    file.open(QIODevice::Append);
 //    QTextStream writein(&file);
+
     if(n>0)
     {//处理得到的数据
         QString msg;

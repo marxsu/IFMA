@@ -15,6 +15,7 @@ public :
         end = 0;
         jiange = 0;
         max = 0;
+        height = 0;
     }
 
     ~Peak()
@@ -26,8 +27,9 @@ public:
     int end;
     int jiange;
     int max;
+    int height;
 };
-void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
+void sortPeakListByHeight(QList<Peak*>* tmpPeakList,int l ,int r,double* data)
 {
         if(l < r)
         {
@@ -35,7 +37,7 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
             Peak* tmpPeak = tmpPeakList->at(l);
             while(i < j)
             {
-                while(i < j &&tmpPeakList->at(j)->max <= tmpPeak->max)
+                while(i < j &&tmpPeakList->at(j)->height <= tmpPeak->height)
                 {
                     j--;
                 }
@@ -43,7 +45,7 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
                 {
                     tmpPeakList->replace(i++,tmpPeakList->at(j));
                 }
-                while(i < j && tmpPeakList->at(i)->max > tmpPeak->max)
+                while(i < j && tmpPeakList->at(i)->height > tmpPeak->height)
                 {
                     i++;
                 }
@@ -53,8 +55,8 @@ void sortPeakListByJiange(QList<Peak*>* tmpPeakList,int l ,int r)
                 }
             }
             tmpPeakList->replace(i,tmpPeak);
-            sortPeakListByJiange(tmpPeakList,l,i-1);
-            sortPeakListByJiange(tmpPeakList,i+1,r);
+            sortPeakListByHeight(tmpPeakList,l,i-1,data);
+            sortPeakListByHeight(tmpPeakList,i+1,r,data);
         }
 }
 
@@ -166,6 +168,7 @@ void checkTest(double data[],int i,double result[], double originData[])
                  flag2 = false;
                  peak->end = j;
                  peak->jiange = peak->end - peak->start;
+                 peak->height = data[peak->max] - data[peak->end];
                  peak = new Peak();
                  peakList->push_back(peak);
              }
@@ -175,7 +178,7 @@ void checkTest(double data[],int i,double result[], double originData[])
 
     //按波峰宽度进行降序排序
     //快速排序
-    sortPeakListByJiange(peakList,0,peakList->count() - 1);
+    sortPeakListByHeight(peakList,0,peakList->count() - 1,data);
     //波峰判断
     if(peakList->count() >= 2)
         {

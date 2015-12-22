@@ -20,7 +20,6 @@
 #include <QFile>
 #include <QTextStream>
 
-
 class UrtClass : public QObject
 {
     Q_OBJECT

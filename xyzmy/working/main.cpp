@@ -20,7 +20,7 @@ SetShow *setshow ;
 BackUpandDelete *backupDelete ;
 bool weatherpoweron();
 void Init_Class();
-static QString SoftwareVersion="V1.0.11.26";
+static QString SoftwareVersion="V1.0.12.18";
 
 int main(int argc, char *argv[])
 {
