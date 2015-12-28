@@ -1,72 +1,82 @@
 #ifndef YIQISUANFA_H
 #define YIQISUANFA_H
 
-#include <QDebug>
-#include <QList>
-#include "FLOUR_v1.0/qtest.h"
-extern int feng1;
-extern int feng2;
-class Peak
-{
-public :
-    Peak()
-    {
-        start = 0;
-        end = 0;
-        jiange = 0;
-        max = 0;
-        height = 0;
-    }
+typedef struct {
+    int start;  //波峰起始点
+    int end;    //波峰终止点
+    int jiange; //波峰宽度
+    int max;    //波峰最高点位置
+    int height;  //波峰高度  新增
+} Peak;
 
-    ~Peak()
-    {
+int PeakNum = 10;
+Peak *peak = new Peak[PeakNum];    //假设有10个波峰
 
-    }
-public:
-    int start;
-    int end;
-    int jiange;
-    int max;
-    int height;
-};
-void sortPeakListByHeight(QList<Peak*>* tmpPeakList,int l ,int r,double* data)
+//按波峰高度进行降序排序
+//快速排序
+void quick_sort_by_height(Peak *peak, int l, int r, double *data)
 {
-        if(l < r)
+    if(l < r)
+    {
+        int i=l, j=r;
+        Peak tmp = peak[l];
+        while(i < j)
         {
-            int i = l,j = r;
-            Peak* tmpPeak = tmpPeakList->at(l);
-            while(i < j)
-            {
-                while(i < j &&tmpPeakList->at(j)->height <= tmpPeak->height)
-                {
-                    j--;
-                }
-                if(i < j)
-                {
-                    tmpPeakList->replace(i++,tmpPeakList->at(j));
-                }
-                while(i < j && tmpPeakList->at(i)->height > tmpPeak->height)
-                {
-                    i++;
-                }
-                if(i < j)
-                {
-                    tmpPeakList->replace(j--,tmpPeakList->at(i));
-                }
-            }
-            tmpPeakList->replace(i,tmpPeak);
-            sortPeakListByHeight(tmpPeakList,l,i-1,data);
-            sortPeakListByHeight(tmpPeakList,i+1,r,data);
+            while(i < j && peak[j].height <= tmp.height)   //从右向左找到第一个大于tmp的数
+                j--;
+            if(i < j)
+                peak[i++] = peak[j];
+            while(i < j && peak[i].height > tmp.height)   //从左往右找到第一个小于等于tmp的数
+                i++;
+            if(i < j)
+                peak[j--] = peak[i];
         }
+        peak[i] = tmp;
+        quick_sort_by_height(peak, l, i-1, data);
+        quick_sort_by_height(peak, i+1, r, data);
+    }
 }
+
+//按波峰峰值进行降序排序
+//快速排序
+void quick_sort_by_max(Peak *peak, int l, int r, double *data)
+{
+    if(l < r)
+    {
+        int i=l, j=r;
+        Peak tmp = peak[l];
+        while(i < j)
+        {
+            while(i < j && data[peak[j].max] <= data[tmp.max])   //从右向左找到第一个大于tmp的数
+                j--;
+            if(i < j)
+                peak[i++] = peak[j];
+            while(i < j && data[peak[i].max] > data[tmp.max])   //从左往右找到第一个小于等于tmp的数
+                i++;
+            if(i < j)
+                peak[j--] = peak[i];
+        }
+        peak[i] = tmp;
+        quick_sort_by_max(peak, l, i-1, data);
+        quick_sort_by_max(peak, i+1, r, data);
+    }
+}
+
 
 void checkTest(double data[],int i,double result[], double originData[])
 {
-    QList<Peak*> *peakList = new QList<Peak*>();
+    int DynamicThreshold = 0; //动态阈值
 
-    Peak* peak = new Peak();
+    //结构体初始化
+    for(int i=0; i<PeakNum; i++)
+    {
+        peak[i].start = 0;
+        peak[i].end = 0;
+        peak[i].jiange = 0;
+        peak[i].max = 0;
+        peak[i].height = 0;
+    }
 
-    peakList->push_back(peak);
     double *pinghuadata = new double[i];
     double *daoshudata = new double[i];
     for(int j=0;j<10/2;j++)
@@ -106,7 +116,7 @@ void checkTest(double data[],int i,double result[], double originData[])
 
        }
     }
-    qDebug()<<"testwindowsize=10";
+
     int testwindowsize=10;
 
     double avg=0.0;
@@ -114,23 +124,21 @@ void checkTest(double data[],int i,double result[], double originData[])
     bool flag2 = false;
     int feng_max[2] = {0};
     int feng[4]={0};
+    int count = 0;
     data[0] = -1;//避免数据线一开始处于较高的位置,影响峰值的判断.
 
     for(int j=0;j<i-testwindowsize+1;j++)
     {
-       //if(c==4) break;
        double sum = 0.0;
        for(int k=j;k<testwindowsize+j;k++)
        {
             sum += daoshudata[k];
        }
        avg=sum/testwindowsize;
-       if(avg>=0.4 && !flag1)
+       if(avg>=0.4  &&  !flag1)
        {
           flag1 = true;   //找到波峰起始点
-          //feng[c] = j;
-          //c++;
-          peak->start = j;
+          peak[count].start = j;  //记录波峰起始点位置
        }
        else if(flag1 & !flag2)
        {
@@ -139,175 +147,121 @@ void checkTest(double data[],int i,double result[], double originData[])
          {
              flag2 = true;
          }
-         if(data[j]>data[peak->max])
-         {
-             peak->max = j;
-         }
-//         if(originData[j] > originData[peak->max])    //正确找到最高点位置
-//          {
-//                peak->max = j;
-//          }
-//          if(j==500 || j==900)//
+         if(data[j]>data[peak[count].max])  //找平滑后数据的最高点
+          {
+              peak[count].max = j;
+          }
+//          if(j==500 || j==900)
 //         {
-//             flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点//
-//        }
+//             flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点
+//         }
        }
        else if(flag1 && flag2)
        {
-           if(data[j]>data[peak->max])
-           {
-               peak->max = j;
-           }
-//           if(originData[j] > originData[peak->max])  //正确找到最高点位置
-//             {
-//                  peak->max = j;
-//             }
+           if(data[j]>data[peak[count].max])  //找平滑后数据的最高点
+            {
+                peak[count].max = j;
+            }
+
            if ((avg>=-0.5|| j==1100))  //找到波峰终止点
              {
                  flag1 = false;
                  flag2 = false;
-                 peak->end = j;
-                 peak->jiange = peak->end - peak->start;
-                 peak->height = data[peak->max] - data[peak->end];
-                 peak = new Peak();
-                 peakList->push_back(peak);
+                 peak[count].end = j;  //记录波峰终止点位置
+                 peak[count].jiange = peak[count].end - peak[count].start; //波峰宽度
+                  peak[count].height = data[peak[count].max] - data[peak[count].end]; //波峰高度
+                 count++;  //下一个波峰
              }
        }
     }
 
 
-    //按波峰宽度进行降序排序
+    //按波峰峰值进行降序排序
     //快速排序
-    sortPeakListByHeight(peakList,0,peakList->count() - 1,data);
+    //quick_sort_by_max(peak, 0, PeakNum-1, data);
+
+    //按波峰高度进行降序排序
+    //快速排序
+    quick_sort_by_height(peak, 0, PeakNum-1, data);
+
+
     //波峰判断
-    if(peakList->count() >= 2)
+    if(peak[0].max > 0 && peak[0].max < 600)  //第一个波峰最高点位置处于0-600之间
+    {
+        //为第一个波峰
+        feng[0] = peak[0].start;
+        feng[1] = peak[0].end;
+        feng_max[0] = peak[0].max;
+    }
+    else if(peak[0].max > 600 && peak[0].max < 1100) //第二个波峰最高点位置处于600-1100之间
+    {
+        //为第二个波峰
+        feng[2] = peak[0].start;
+        feng[3] = peak[0].end;
+        feng_max[1] = peak[0].max;
+    }
+
+    if(peak[1].max > 0 && peak[1].max < 600)  //第一个波峰最高点位置处于0-600之间
+    {
+        //为第一个波峰
+        feng[0] = peak[1].start;
+        feng[1] = peak[1].end;
+        feng_max[0] = peak[1].max;
+    }
+    else if(peak[1].max > 600 && peak[1].max < 1100) //第二个波峰最高点位置处于600-1100之间
+    {
+        //为第二个波峰
+        feng[2] = peak[1].start;
+        feng[3] = peak[1].end;
+        feng_max[1] = peak[1].max;
+    }
+
+    //设定动态阈值，如果基线是平的，阈值低一点，如果基线有波动，阈值高一点
+    if (peak[2].height > 0)
+    {
+        for(int k=2; k<PeakNum; k++)
         {
-          if(peakList->at(0)->max < peakList->at(1)->max)
-          {
-              feng[0] = peakList->at(0)->start;
-              feng[1] = peakList->at(0)->end;
-              feng_max[0] = peakList->at(0)->max;
-
-              feng[2] = peakList->at(1)->start;
-              feng[3] = peakList->at(1)->end;
-              feng_max[1] = peakList->at(1)->max;
-          }else
-          {
-              feng[0] = peakList->at(1)->start;
-              feng[1] = peakList->at(1)->end;
-              feng_max[0] = peakList->at(1)->max;
-
-              feng[2] = peakList->at(0)->start;
-              feng[3] = peakList->at(0)->end;
-              feng_max[1] = peakList->at(0)->max;
-          }
+            if (peak[k].max>feng[1] && peak[k].max<feng[2])  //T峰跟C峰之间存在波动
+            {
+                //存在波动
+                DynamicThreshold = peak[k].height;
+                break;
+            }
+            else
+            {
+                //不存在波动
+                DynamicThreshold = 0;
+            }
         }
-
-//    double bendi=0;
-//    double sum_bendi=0;
-    qDebug()<<"feng_max[0]"<<feng_max[0];
-    qDebug()<<"feng_max[1]"<<feng_max[1];
-    qDebug()<<"data[feng_max[0]]"<<data[feng_max[0]];
-    qDebug()<<"data[feng_max[1]]"<<data[feng_max[1]];
-//    for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
-//    {
-//         sum_bendi+=data[j];
-//    }
-//    bendi=sum_bendi/(41.0);
-
-    for(int j=0;j<2;j++)
-    {
-      if(j==0)
-      {
-//        double mianji=0;
-//        if(feng[j+1]-feng[j]>=50)
-//        {
-//            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-//            {
-
-//               mianji+=(data[x]-bendi);
-//            }
-//            result[0]=mianji;
-//        }
-//        else
-//        {
-//            result[0]=0;
-//        }
-
-          if((data[feng_max[0]]-data[feng[1]])>200)  //峰高度最少要有200，否则这个峰就认为为0
-          {
-              result[0] = data[feng_max[0]];  //直接取峰值，不算面积
-          }
-          else
-          {
-              result[0] = 0;
-          }
-      }
-      else if(j==1)
-      {
-//        double mianji=0;
-//        if(feng[j+2]-feng[j+1]>=50)
-//        {
-//            for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-//            {
-//               mianji+=(data[x]-bendi);
-//            }
-//            result[1]=mianji;
-//        }
-//        else
-//        {
-//            result[1]=0;
-//        }
-          if((data[feng_max[1]]-data[feng[3]])>200)  //峰高度最少要有200，否则这个峰就认为为0
-          {
-              result[1] = data[feng_max[1]];  //直接取峰值，不算面积
-          }
-          else
-          {
-              result[1] = 0;
-          }
-      }
     }
-    delete []pinghuadata;
-    delete []daoshudata;
-    qDeleteAll(*peakList);
-    peakList->clear();
+    else
+    {
+        //不存在波动
+        DynamicThreshold = 0;
+    }
+
+
+    //结果
+    if((feng[1]!=0) && ((data[feng_max[0]]-data[feng[1]]) > DynamicThreshold))
+    {
+        result[0] = data[feng_max[0]];  //直接取峰值，不算面积
+    }
+    else
+    {
+        result[0] = 0;
+    }
+
+    if((feng[3]!=0) && ((data[feng_max[1]]-data[feng[3]]) > DynamicThreshold))
+    {
+        result[1] = data[feng_max[1]];  //直接取峰值，不算面积
+    }
+    else
+    {
+        result[1] = 0;
+    }
+
+    delete [] pinghuadata;
+    delete [] daoshudata;
+    delete [] peak;
 }
-
-void qCheckTest(double data[],int i,double result[])
-{
-    int feng_max[2] = {0};
-    double bendi=0;
-    double sum_bendi=0;
-    qTest(data);
-    feng_max[0] = feng1;
-    feng_max[1] = feng2;
-    for(int j=(feng_max[0]+feng_max[1])/2-20;j<(feng_max[0]+feng_max[1])/2+21;j++)
-    {
-         sum_bendi+=data[j];
-    }
-    for(int j=0;j<2;j++)
-    {
-      if(j==0)
-      {
-        double mianji=0;
-        for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-         {
-               mianji+=(data[x]-bendi);
-         }
-            result[0]=mianji;
-        }
-      else if(j==1)
-      {
-        double mianji=0;
-        for(int x=feng_max[j]-20;x<feng_max[j]+21;x++)
-        {
-             mianji+=(data[x]-bendi);
-         }
-            result[1]=mianji;
-       }
-    }
-
-}
-
 #endif // YIQISUANFA_H
