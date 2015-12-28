@@ -147,10 +147,10 @@ void checkTest(double data[],int i,double result[], double originData[])
 //          {
 //                peak->max = j;
 //          }
-          if(j==500 || j==900)
-         {
-             flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点
-         }
+//          if(j==500 || j==900)//
+//         {
+//             flag2 = true;//因为下降过缓,导致没有正确判断时,当到达第500和第900点时,开始判断终止点//
+//        }
        }
        else if(flag1 && flag2)
        {
